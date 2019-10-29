@@ -1,0 +1,4 @@
+nano
+libsm6
+libxext6
+libxrender-dev

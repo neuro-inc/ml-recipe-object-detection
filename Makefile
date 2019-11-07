@@ -1,209 +1,206 @@
-CODE_PATH?=detection
-DATA_PATH?=data
-NOTEBOOKS_PATH?=notebooks
-REQUIREMENTS_PIP?=requirements.txt
-REQUIREMENTS_APT?=apt.txt
-RESULTS_PATH?=results
-PROJECT_PATH_STORAGE?=storage:goods-on-shelves-detection
-CODE_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(CODE_PATH)
-DATA_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_PATH)
-NOTEBOOKS_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_PATH)
-REQUIREMENTS_PIP_STORAGE?=$(PROJECT_PATH_STORAGE)/$(REQUIREMENTS_PIP)
-REQUIREMENTS_APT_STORAGE?=$(PROJECT_PATH_STORAGE)/$(REQUIREMENTS_APT)
-RESULTS_PATH_STORAGE?=$(PROJECT_PATH_STORAGE)/$(RESULTS_PATH)
+##### PATHS #####
 
-PROJECT_PATH_ENV?=/project
-CODE_PATH_ENV?=$(PROJECT_PATH_ENV)/$(CODE_PATH)
-DATA_PATH_ENV?=$(PROJECT_PATH_ENV)/$(DATA_PATH)
-NOTEBOOKS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(NOTEBOOKS_PATH)
-REQUIREMENTS_PIP_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_PIP)
-REQUIREMENTS_APT_ENV?=$(PROJECT_PATH_ENV)/$(REQUIREMENTS_APT)
-RESULTS_PATH_ENV?=$(PROJECT_PATH_ENV)/$(RESULTS_PATH)
+DATA_DIR?=data
+CODE_DIR?=detection
+NOTEBOOKS_DIR?=notebooks
+RESULTS_DIR?=results
 
-NEURO_CP=neuro cp --recursive --update --no-target-directory
+PROJECT_FILES=requirements.txt apt.txt setup.cfg
 
-SETUP_NAME?=setup-goods-on-shelves-detection
-TRAINING_NAME?=training-goods-on-shelves-detection
-JUPYTER_NAME?=jupyter-goods-on-shelves-detection
-TENSORBOARD_NAME?=tensorboard-goods-on-shelves-detection
-FILEBROWSER_NAME?=filebrowser-goods-on-shelves-detection
+PROJECT_PATH_STORAGE?=storage:ml-recipe-object-detection
+
+PROJECT_PATH_ENV?=/ml-recipe-object-detection
+
+##### JOB NAMES #####
+
+PROJECT_POSTFIX?=ml-recipe-object-detection
+
+SETUP_JOB?=setup-$(PROJECT_POSTFIX)
+TRAINING_JOB?=training-$(PROJECT_POSTFIX)
+JUPYTER_JOB?=jupyter-$(PROJECT_POSTFIX)
+TENSORBOARD_JOB?=tensorboard-$(PROJECT_POSTFIX)
+FILEBROWSER_JOB?=filebrowser-$(PROJECT_POSTFIX)
+
+##### ENVIRONMENTS #####
 
 BASE_ENV_NAME?=neuromation/base
-CUSTOM_ENV_NAME?=image:neuromation-goods-on-shelves-detection
+CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
+
+##### VARIABLES YOU MAY WANT TO MODIFY #####
+
+# Location of your dataset on the platform storage. Example:
+# DATA_DIR_STORAGE?=storage:datasets/cifar10
+DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
+
+# The type of the training machine (run `neuro config show` to see the list of available types).
 TRAINING_MACHINE_TYPE?=gpu-small
-
-# Set it to True (verbatim) to disable HTTP authentication for your jobs
-DISABLE_HTTP_AUTH:=True
-ifeq ($(DISABLE_HTTP_AUTH), True)
-	HTTP_AUTH:=--no-http-auth
-endif
-
-APT_COMMAND?=apt-get -qq
-PIP_COMMAND?=pip -q
-# example:
-# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_PATH)/train.py --data $(DATA_PATH_ENV)'"
+# HTTP authentication (via cookies) for the job's HTTP link.
+# Set `HTTP_AUTH?=--no-http-auth` to disable any authentication.
+# WARNING: removing authentication might disclose your sensitive data stored in the job.
+HTTP_AUTH?=--http-auth
+# Command to run training inside the environment. Example:
+# TRAINING_COMMAND="bash -c 'cd $(PROJECT_PATH_ENV) && python -u $(CODE_DIR)/train.py --data $(DATA_DIR)'"
 TRAINING_COMMAND?='echo "Replace this placeholder with a training script execution"'
 
+##### COMMANDS #####
+
+APT?=apt-get -qq
+PIP?=pip install --progress-bar=off
+NEURO?=neuro
+
+##### HELP #####
 
 .PHONY: help
 help:
+	@# generate help message by parsing current Makefile
 	@# idea: https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 	@grep -hE '^[a-zA-Z_-]+:\s*?### .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
 
 ##### SETUP #####
 
 .PHONY: setup
 setup: ### Setup remote environment
-	neuro kill $(SETUP_NAME)
-	neuro run \
-		--name $(SETUP_NAME) \
+	$(NEURO) kill $(SETUP_JOB) >/dev/null 2>&1
+	$(NEURO) run \
+		--name $(SETUP_JOB) \
 		--preset cpu-small \
 		--detach \
 		--volume $(PROJECT_PATH_STORAGE):$(PROJECT_PATH_ENV):ro \
-		--env PLATFORMAPI_SERVICE_HOST="." \
 		$(BASE_ENV_NAME) \
 		'sleep 1h'
-	neuro cp $(REQUIREMENTS_APT) $(REQUIREMENTS_APT_STORAGE)
-	neuro cp $(REQUIREMENTS_PIP) $(REQUIREMENTS_PIP_STORAGE)
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT_COMMAND) update && cat $(REQUIREMENTS_APT_ENV) | xargs -I % $(APT_COMMAND) install --no-install-recommends % && $(APT_COMMAND) clean && $(APT_COMMAND) autoremove && rm -rf /var/lib/apt/lists/*'"
-	neuro exec --no-key-check $(SETUP_NAME) "bash -c '$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP_ENV) && echo installed pip requirements'"
-	neuro --network-timeout 300 job save $(SETUP_NAME) $(CUSTOM_ENV_NAME)
-	neuro kill $(SETUP_NAME)
+	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
+	$(NEURO) kill $(SETUP_JOB)
 
 ##### STORAGE #####
 
 .PHONY: upload-code
-upload-code:  ### Upload code directory to Storage
-	$(NEURO_CP) $(CODE_PATH) $(CODE_PATH_STORAGE)
-	$(NEURO_CP) pytorch_detection $(PROJECT_PATH_STORAGE)/pytorch_detection
+upload-code:  ### Upload code directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(CODE_DIR) $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
+	$(NEURO) cp --recursive --update --no-target-directory pytorch_detection $(PROJECT_PATH_STORAGE)/pytorch_detection
 
 .PHONY: clean-code
-clean-code:  ### Delete code directory on Storage
-	neuro rm -r $(CODE_PATH_STORAGE)
+clean-code:  ### Delete code directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
-.PHONY: upload-data  ### Upload data directory to Storage
-upload-data:
-	$(NEURO_CP) $(DATA_PATH) $(DATA_PATH_STORAGE)
+.PHONY: upload-data
+upload-data:  ### Upload data directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
 
-.PHONY: clean-data  ### Delete data directory on Storage
-clean-data:
-	neuro rm -r $(DATA_PATH_STORAGE)
+.PHONY: clean-data
+clean-data:  ### Delete data directory from the platform storage
+	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)
 
 .PHONY: upload-notebooks
-upload-notebooks:  ### Upload notebooks directory to Storage
-	$(NEURO_CP) $(NOTEBOOKS_PATH) $(NOTEBOOKS_PATH_STORAGE)
+upload-notebooks:  ### Upload notebooks directory to the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: download-notebooks
-download-notebooks:  ### Download notebooks directory from Storage
-	$(NEURO_CP) $(NOTEBOOKS_PATH_STORAGE) $(NOTEBOOKS_PATH)
+download-notebooks:  ### Download notebooks directory from the platform storage
+	$(NEURO) cp --recursive --update --no-target-directory $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR) $(NOTEBOOKS_DIR)
 
 .PHONY: clean-notebooks
-clean-notebooks:  ### Delete notebooks directory on Storage
-	neuro rm -r $(NOTEBOOKS_PATH_STORAGE)
+clean-notebooks:  ### Delete notebooks directory from the platform storage
+	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
-.PHONY: upload  ### Upload code, data and notebooks directories to Storage
+.PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
 upload: upload-code upload-data upload-notebooks
 
-.PHONY: clean  ### Delete code, data and notebooks directories on Storage
+.PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
 clean: clean-code clean-data clean-notebooks
 
 ##### JOBS #####
 
 .PHONY: training
-training:  ### Run training job
-	neuro run \
-		--name $(TRAINING_NAME) \
+training:  ### Run a training job
+	$(NEURO) run \
+		--name $(TRAINING_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
-		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):ro \
-		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
-		--env PLATFORMAPI_SERVICE_HOST="." \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
+		--volume $(PROJECT_PATH_STORAGE)/pytorch_detection:$(PROJECT_PATH_ENV)/pytorch_detection:ro \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
+		--env EXPOSE_SSH=yes \
 		$(CUSTOM_ENV_NAME) \
 		$(TRAINING_COMMAND)
 
 .PHONY: kill-training
-kill-training:  ### Stop training job
-	neuro kill $(TRAINING_NAME)
+kill-training:  ### Terminate the training job
+	$(NEURO) kill $(TRAINING_JOB)
 
 .PHONY: connect-training
-connect-training:  ### Execute shell to the training job
-	neuro exec --no-key-check $(TRAINING_NAME) bash
+connect-training:  ### Connect to the remote shell running on the training job
+	$(NEURO) exec --no-tty --no-key-check $(TRAINING_JOB) bash
 
 .PHONY: jupyter
-jupyter: upload-code upload-notebooks ### Run jupyter job
-	neuro run \
-		--name $(JUPYTER_NAME) \
+jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
+	$(NEURO) run \
+		--name $(JUPYTER_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--http 8888 --detach \
+		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
-		--volume $(DATA_PATH_STORAGE):$(DATA_PATH_ENV):ro \
-		--volume $(CODE_PATH_STORAGE):$(CODE_PATH_ENV):rw \
+		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/pytorch_detection:$(PROJECT_PATH_ENV)/pytorch_detection:ro \
-		--volume $(NOTEBOOKS_PATH_STORAGE):$(NOTEBOOKS_PATH_ENV):rw \
-		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):rw \
-		--env PLATFORMAPI_SERVICE_HOST="." \
+		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
 		$(CUSTOM_ENV_NAME) \
-		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(NOTEBOOKS_PATH_ENV)'
+		'jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token= --notebook-dir=$(PROJECT_PATH_ENV)'
 
 .PHONY: kill-jupyter
-kill-jupyter:  ### Stop jupyter job
-	neuro kill $(JUPYTER_NAME)
+kill-jupyter:  ### Terminate the job with Jupyter Notebook
+	$(NEURO) kill $(JUPYTER_JOB)
 
 .PHONY: tensorboard
-tensorboard:  ### Run tensorboard job
-	neuro run \
-		--name $(TENSORBOARD_NAME) \
+tensorboard:  ### Run a job with TensorBoard and open UI in the default browser
+	$(NEURO) run \
+		--name $(TENSORBOARD_JOB) \
 		--preset cpu-small \
-		--browse \
-		--http 6006 --detach \
+		--http 6006 \
 		$(HTTP_AUTH) \
-		--volume $(RESULTS_PATH_STORAGE):$(RESULTS_PATH_ENV):ro \
-		--env PLATFORMAPI_SERVICE_HOST="." \
+		--browse \
+		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):ro \
 		$(CUSTOM_ENV_NAME) \
-		'tensorboard --logdir=$(RESULTS_PATH_ENV)'
+		'tensorboard --host=0.0.0.0 --logdir=$(PROJECT_PATH_ENV)/$(RESULTS_DIR)'
 
 .PHONY: kill-tensorboard
-kill-tensorboard:  ### Kill tensorboard job
-	neuro kill $(TENSORBOARD_NAME)
+kill-tensorboard:  ### Terminate the job with TensorBoard
+	$(NEURO) kill $(TENSORBOARD_JOB)
 
 .PHONY: filebrowser
-filebrowser:  ### Run filebrowser job
-	neuro run \
-		--name $(FILEBROWSER_NAME) \
+filebrowser:  ### Run a job with File Browser and open UI in the default browser
+	$(NEURO) run \
+		--name $(FILEBROWSER_JOB) \
 		--preset cpu-small \
-		--http 80 --detach \
+		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		--env PLATFORMAPI_SERVICE_HOST="." \
 		filebrowser/filebrowser
 
 .PHONY: kill-filebrowser
-kill-filebrowser:  ### Kill filebrowser job
-	neuro kill $(FILEBROWSER_NAME)
+kill-filebrowser:  ### Terminate the job with File Browser
+	$(NEURO) kill $(FILEBROWSER_JOB)
 
-.PHONY: kill  ### Kill training, jupyter, tensorboard and filebrowser jobs (even if some of them are not running)
+.PHONY: kill  ### Terminate all jobs of this project
 kill: kill-training kill-jupyter kill-tensorboard kill-filebrowser
 
 ##### LOCAL #####
 
 .PHONY: setup-local
 setup-local:  ### Install pip requirements locally
-	$(PIP_COMMAND) install -r $(REQUIREMENTS_PIP)
+	$(PIP) -r $(REQUIREMENTS_PIP)
 
 .PHONY: lint
 lint:  ### Run static code analysis locally
 	flake8 .
 	mypy .
 
-.PHONY: install
-install:  ### Install project as a python package locally
-	python setup.py install --user
-
 ##### MISC #####
 
 .PHONY: ps
 ps:  ### List all running and pending jobs
-	neuro ps
+	$(NEURO) ps

@@ -4,13 +4,13 @@ This recipe has code and procedures necessary to add new object classes into obj
 
 # Quick Start
 
-##### Sign up at [neu.ro](https://neu.ro).
-##### Install CLI and log in:
+##### 0. Sign up at [neu.ro](https://neu.ro)
+##### 1. Install CLI and log in
 ```shell
 pip install -U neuromation
 neuro login
 ```
-##### Run the recipe:
+##### 2. Run the recipe
 ```shell
 git clone git@github.com:neuromation/ml-recipe-object-detection.git
 cd ml-recipe-object-detection

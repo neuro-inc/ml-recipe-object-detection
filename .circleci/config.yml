@@ -47,7 +47,6 @@ workflows:
   main:
     jobs:
       - build:
-          context: org-dev
           filters:
             branches:
               ignore: /TODO.*/

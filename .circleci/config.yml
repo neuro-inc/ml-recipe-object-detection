@@ -33,11 +33,12 @@ jobs:
             export IMAGE_URI=image:$IMAGE_REF
             make setup CUSTOM_ENV_NAME=$IMAGE_URI
             neuro pull $IMAGE_URI
+            docker tag $IMAGE_REF $IMAGE_NAME:$CIRCLE_TAG
             docker tag $IMAGE_REF $IMAGE_NAME:latest
       - docker/check
       - docker/push:
           image: neuromation/ml-recipe-object-detection
-          tag: latest
+          tag: $CIRCLE_TAG,latest
 
 
 workflows:
@@ -49,6 +50,7 @@ workflows:
           context: org-dev
           filters:
             branches:
-              ignore:
-                - master
-                - /release.*/
+              ignore: /TODO.*/
+            tags:
+              only:
+                - /.*/

@@ -22,7 +22,7 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
-            pip install neuromation==20.1.22
+            pip install --user neuromation==20.1.22
       - run:
           name: Build Image
           command: |

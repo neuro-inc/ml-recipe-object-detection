@@ -28,8 +28,9 @@ jobs:
           command: |
             neuro config login-with-token $NEURO_TOKEN
             neuro config docker
-            make setup CUSTOM_ENV_NAME=ci-ml-recipe-object-detection:$CIRCLE_BUILD_NUM
-            neuro pull image:ci-ml-recipe-object-detection:$CIRCLE_BUILD_NUM
+            export IMAGE_URI=image:ci-ml-recipe-object-detection:$CIRCLE_BUILD_NUM
+            make setup CUSTOM_ENV_NAME=$IMAGE_URI
+            neuro pull $IMAGE_URI
 
 
 workflows:

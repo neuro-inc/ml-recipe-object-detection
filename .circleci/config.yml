@@ -49,7 +49,7 @@ workflows:
       - build:
           filters:
             branches:
-              ignore: /TODO.*/
+              ignore: /.*/
             tags:
               only:
                 - /.*/

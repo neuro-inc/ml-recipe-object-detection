@@ -1,0 +1,39 @@
+version: 2.1
+
+executors:
+  python:
+    docker:
+      - image: circleci/python:3.7.5-stretch
+
+defaults: &defaults
+  executor: python
+
+orbs:
+  docker: circleci/docker@0.5.20
+
+
+jobs:
+
+  build:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip --version
+
+
+workflows:
+  version: 2
+
+  main:
+    jobs:
+      - build:
+          context: org-dev
+          filters:
+            branches:
+              ignore:
+                - master
+                - /release.*/

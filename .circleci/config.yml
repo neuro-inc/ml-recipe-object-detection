@@ -20,9 +20,14 @@ jobs:
       - setup_remote_docker
       - checkout
       - run:
-          name: Install dependencies
+          name: Install Dependencies
           command: |
-            pip --version
+            pip install neuromation==20.1.22
+      - run:
+          name: Build Image
+          command: |
+            neuro config login-with-token $NEURO_TOKEN
+            neuro config show
 
 
 workflows:

@@ -73,8 +73,6 @@ setup: ### Setup remote environment
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
 ifdef __BAKE_SETUP
 	make __bake
-	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
-	    "bash -c 'mkdir -p /project; cp -R $(PROJECT_PATH_ENV) /project'; chmod +x /project/jupyter.sh"
 endif
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
@@ -82,10 +80,10 @@ endif
 __bake: upload-code upload-data upload-notebooks
 	echo "#!/usr/bin/env bash" > jupyter.sh
 	echo "jupyter notebook --no-browser --ip=0.0.0.0 --allow-root \
-	    --NotebookApp.token= /project/notebooks/demo.ipynb" >> jupyter.sh
+	    --NotebookApp.token= --notebook-dir=/project/notebooks" >> jupyter.sh
 	$(NEURO) cp jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
-	    "bash -c 'mkdir -p /project; cp -R -T $(PROJECT_PATH_ENV) /project'; chmod +x /project/jupyter.sh"
+	    "bash -c 'mkdir -p /project; cp -R -T $(PROJECT_PATH_ENV) /project'"
 
 
 ##### STORAGE #####

@@ -71,8 +71,20 @@ setup: ### Setup remote environment
 	for file in $(PROJECT_FILES); do $(NEURO) cp ./$$file $(PROJECT_PATH_STORAGE)/$$file; done
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c 'export DEBIAN_FRONTEND=noninteractive && $(APT) update && cat $(PROJECT_PATH_ENV)/apt.txt | xargs -I % $(APT) install --no-install-recommends % && $(APT) clean && $(APT) autoremove && rm -rf /var/lib/apt/lists/*'"
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) "bash -c '$(PIP) -r $(PROJECT_PATH_ENV)/requirements.txt'"
+ifdef __BAKE_SETUP
+	make __bake
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
+	    "bash -c 'mkdir -p /project; cp -R $(PROJECT_PATH_ENV) /project'; chmod +x /project/jupyter.sh"
+endif
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
+
+__bake: upload-code upload-data upload-notebooks
+	echo "#!/usr/bin/env bash" > jupyter.sh
+	echo "jupyter notebook --no-browser --ip=0.0.0.0 --allow-root \
+	    --NotebookApp.token= /project/notebooks/demo.ipynb" >> jupyter.sh
+	$(NEURO) cp jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
+
 
 ##### STORAGE #####
 

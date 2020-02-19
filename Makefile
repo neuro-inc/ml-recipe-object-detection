@@ -84,6 +84,8 @@ __bake: upload-code upload-data upload-notebooks
 	echo "jupyter notebook --no-browser --ip=0.0.0.0 --allow-root \
 	    --NotebookApp.token= /project/notebooks/demo.ipynb" >> jupyter.sh
 	$(NEURO) cp jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
+	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
+	    "bash -c 'mkdir -p /project; cp -R -T $(PROJECT_PATH_ENV) /project'; chmod +x /project/jupyter.sh"
 
 
 ##### STORAGE #####

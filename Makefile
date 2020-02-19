@@ -77,6 +77,7 @@ endif
 	$(NEURO) --network-timeout 300 job save $(SETUP_JOB) $(CUSTOM_ENV_NAME)
 	$(NEURO) kill $(SETUP_JOB)
 
+.PHONY: __bake
 __bake: upload-code upload-data upload-notebooks
 	echo "#!/usr/bin/env bash" > jupyter.sh
 	echo "jupyter notebook --no-browser --ip=0.0.0.0 --allow-root \

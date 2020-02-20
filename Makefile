@@ -89,7 +89,6 @@ __bake: upload-code upload-data upload-notebooks
             --NotebookApp.shutdown_no_activity_timeout=10800 \
             --MappingKernelManager.cull_idle_timeout=10800 \
             --MappingKernelManager.cull_interval=60 \
-            --Application.log_level=DEBUG \
 " >> jupyter.sh
 	$(NEURO) cp jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \

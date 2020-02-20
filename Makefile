@@ -80,8 +80,17 @@ endif
 .PHONY: __bake
 __bake: upload-code upload-data upload-notebooks
 	echo "#!/usr/bin/env bash" > jupyter.sh
-	echo "jupyter notebook --no-browser --ip=0.0.0.0 --allow-root \
-	    --NotebookApp.token= --notebook-dir=/project/notebooks" >> jupyter.sh
+	echo "jupyter notebook \
+            --no-browser \
+            --ip=0.0.0.0 \
+            --allow-root \
+	    --NotebookApp.token= \
+            --NotebookApp.default_url=/project/notebooks/demo.ipynb\
+            --NotebookApp.shutdown_no_activity_timeout=10800 \
+            --MappingKernelManager.cull_idle_timeout=10800 \
+            --MappingKernelManager.cull_interval=60 \
+            --Application.log_level=DEBUG \
+" >> jupyter.sh
 	$(NEURO) cp jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
 	    "bash -c 'mkdir -p /project; cp -R -T $(PROJECT_PATH_ENV) /project'"

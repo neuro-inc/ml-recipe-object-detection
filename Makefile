@@ -84,7 +84,7 @@ __bake: upload-code upload-data upload-notebooks
             --no-browser \
             --ip=0.0.0.0 \
             --allow-root \
-	    --NotebookApp.token= \
+            --NotebookApp.token= \
             --NotebookApp.default_url=/project/notebooks/demo.ipynb\
             --NotebookApp.shutdown_no_activity_timeout=10800 \
             --MappingKernelManager.cull_idle_timeout=10800 \

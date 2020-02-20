@@ -85,7 +85,7 @@ __bake: upload-code upload-data upload-notebooks
             --ip=0.0.0.0 \
             --allow-root \
             --NotebookApp.token= \
-            --NotebookApp.default_url=/project/notebooks/demo.ipynb\
+            --NotebookApp.default_url=/notebooks/project/notebooks/demo.ipynb\
             --NotebookApp.shutdown_no_activity_timeout=10800 \
             --MappingKernelManager.cull_idle_timeout=10800 \
 " >> jupyter.sh

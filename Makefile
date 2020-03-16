@@ -85,15 +85,15 @@ __bake: upload-code upload-data upload-notebooks
             --ip=0.0.0.0 \
             --allow-root \
             --NotebookApp.token= \
-            --NotebookApp.default_url=/notebooks/project/notebooks/demo.ipynb \
+            --NotebookApp.default_url=/notebooks/project-local/notebooks/demo.ipynb \
             --NotebookApp.shutdown_no_activity_timeout=7200 \
             --MappingKernelManager.cull_idle_timeout=7200 \
 " >> /tmp/jupyter.sh
 	$(NEURO) cp /tmp/jupyter.sh $(PROJECT_PATH_STORAGE)/jupyter.sh
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
-	    "bash -c 'mkdir -p /project; cp -R -T $(PROJECT_PATH_ENV) /project'"
+	    "bash -c 'mkdir -p /project-local; cp -R -T $(PROJECT_PATH_ENV) /project-local'"
 	$(NEURO) exec --no-tty --no-key-check $(SETUP_JOB) \
-           "jupyter trust /project/notebooks/demo.ipynb"
+           "jupyter trust /project-local/notebooks/demo.ipynb"
 
 
 ##### STORAGE #####

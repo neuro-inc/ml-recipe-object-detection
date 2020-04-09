@@ -38,6 +38,7 @@ test_jupyter_baked:
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(JOB_NAME) \
 		--preset gpu-small \
+		--volume $(DATA_ROOT_STORAGE):$(DATA_ROOT_PATH_ENV):ro \
 		$(CUSTOM_ENV_NAME) \
 		bash -c '$(CMD_PREPARE) && $(CMD_NBCONVERT)'
 	# kill job to set its SUCCEEDED status in platform-api

@@ -13,6 +13,9 @@ PROJECT_PATH_STORAGE?=storage:ml-recipe-object-detection
 
 PROJECT_PATH_ENV?=/ml-recipe-object-detection
 
+DATA_ROOT_STORAGE=storage:/neuromation/public/ml-recipe-object-detection
+DATA_ROOT_PATH_ENV=/data
+
 ##### JOB NAMES #####
 
 PROJECT_POSTFIX?=ml-recipe-object-detection
@@ -30,9 +33,8 @@ CUSTOM_ENV_NAME?=image:neuromation-$(PROJECT_POSTFIX)
 
 ##### VARIABLES YOU MAY WANT TO MODIFY #####
 
-# Location of your dataset on the platform storage. Example:
-# DATA_DIR_STORAGE?=storage:datasets/cifar10
-DATA_DIR_STORAGE?=$(PROJECT_PATH_STORAGE)/$(DATA_DIR)
+# Location of your dataset on the platform storage.
+DATA_DIR_STORAGE=storage:/neuromation/ml-recipe-object-detection/
 
 # The type of the training machine (run `neuro config show` to see the list of available types).
 TRAINING_MACHINE_TYPE?=gpu-small
@@ -148,7 +150,7 @@ training:  ### Run a training job
 	$(NEURO) run $(RUN_EXTRA) \
 		--name $(TRAINING_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
-		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):ro \
+		--volume $(DATA_ROOT_STORAGE):$(DATA_ROOT_PATH_ENV):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):ro \
 		--volume $(PROJECT_PATH_STORAGE)/pytorch_detection:$(PROJECT_PATH_ENV)/pytorch_detection:ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(RESULTS_DIR):$(PROJECT_PATH_ENV)/$(RESULTS_DIR):rw \
@@ -172,7 +174,7 @@ jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and op
 		--http 8888 \
 		$(HTTP_AUTH) \
 		--browse \
-		--volume $(DATA_DIR_STORAGE):$(PROJECT_PATH_ENV)/$(DATA_DIR):rw \
+		--volume $(DATA_ROOT_STORAGE):$(DATA_ROOT_PATH_ENV):ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(CODE_DIR):$(PROJECT_PATH_ENV)/$(CODE_DIR):rw \
 		--volume $(PROJECT_PATH_STORAGE)/pytorch_detection:$(PROJECT_PATH_ENV)/pytorch_detection:ro \
 		--volume $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR):$(PROJECT_PATH_ENV)/$(NOTEBOOKS_DIR):rw \
@@ -208,8 +210,10 @@ filebrowser:  ### Run a job with File Browser and open UI in the default browser
 		--http 80 \
 		$(HTTP_AUTH) \
 		--browse \
+		--volume $(DATA_ROOT_STORAGE):$(DATA_ROOT_PATH_ENV):ro \
 		--volume $(PROJECT_PATH_STORAGE):/srv:rw \
-		filebrowser/filebrowser
+		filebrowser/filebrowser \
+		--noauth
 
 .PHONY: kill-filebrowser
 kill-filebrowser:  ### Terminate the job with File Browser

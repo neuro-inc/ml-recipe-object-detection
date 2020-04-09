@@ -89,7 +89,7 @@ endif
 	$(NEURO) kill $(SETUP_JOB)
 
 .PHONY: __bake
-__bake: upload-code upload-data upload-notebooks
+__bake: upload-code upload-notebooks
 	echo "#!/usr/bin/env bash" > /tmp/jupyter.sh
 	echo "jupyter notebook \
             --no-browser \
@@ -117,14 +117,6 @@ upload-code:  ### Upload code directory to the platform storage
 clean-code:  ### Delete code directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(CODE_DIR)
 
-.PHONY: upload-data
-upload-data:  ### Upload data directory to the platform storage
-	$(NEURO) cp --recursive --update --no-target-directory $(DATA_DIR) $(DATA_DIR_STORAGE)
-
-.PHONY: clean-data
-clean-data:  ### Delete data directory from the platform storage
-	$(NEURO) rm --recursive $(DATA_DIR_STORAGE)
-
 .PHONY: upload-notebooks
 upload-notebooks:  ### Upload notebooks directory to the platform storage
 	$(NEURO) cp --recursive --update --no-target-directory $(NOTEBOOKS_DIR) $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
@@ -138,10 +130,10 @@ clean-notebooks:  ### Delete notebooks directory from the platform storage
 	$(NEURO) rm --recursive $(PROJECT_PATH_STORAGE)/$(NOTEBOOKS_DIR)
 
 .PHONY: upload  ### Upload code, data, and notebooks directories to the platform storage
-upload: upload-code upload-data upload-notebooks
+upload: upload-code upload-notebooks
 
 .PHONY: clean  ### Delete code, data, and notebooks directories from the platform storage
-clean: clean-code clean-data clean-notebooks
+clean: clean-code clean-notebooks
 
 ##### JOBS #####
 

@@ -14,7 +14,7 @@ orbs:
 
 jobs:
 
-  build:
+  build_and_test:
     <<: *defaults
     steps:
       - setup_remote_docker

@@ -49,10 +49,20 @@ workflows:
 
   main:
     jobs:
-      - build:
+
+      - build_and_test:
+          filters:
+            tags:
+              only:
+                - /.*/
+
+      - deploy:
+          requires:
+            - build_and_test
           filters:
             branches:
-              ignore: /.*/
+              ignore: 
+                - /.*/
             tags:
               only:
                 - /.*/

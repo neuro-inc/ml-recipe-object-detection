@@ -49,7 +49,6 @@ JUPYTER_CMD?=jupyter notebook \
   --ip=0.0.0.0 \
   --allow-root \
   --NotebookApp.token= \
-  --NotebookApp.quit_button=True \
   --notebook-dir=$(PROJECT_PATH_ENV)
 
 ##### COMMANDS #####
@@ -168,6 +167,7 @@ connect-training:  ### Connect to the remote shell running on the training job
 .PHONY: jupyter
 jupyter: upload-code upload-notebooks ### Run a job with Jupyter Notebook and open UI in the default browser
 	$(NEURO) run $(RUN_EXTRA) \
+		--name $(JUPYTER_JOB) \
 		--preset $(TRAINING_MACHINE_TYPE) \
 		--http 8888 \
 		$(HTTP_AUTH) \

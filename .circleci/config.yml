@@ -100,7 +100,7 @@ workflows:
             - build_and_test
           filters:
             branches:
-              ignore:
+              ignore: 
                 - /.*/
             tags:
               only:

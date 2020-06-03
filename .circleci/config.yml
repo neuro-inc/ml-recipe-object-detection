@@ -21,7 +21,7 @@ jobs:
       - run: &setup_env_vars
           name: Setup Environment Variables
           command: |
-            export PROJECT_NAME=ml-recipe-midi-generator
+            export PROJECT_NAME=ml-recipe-object-detection
             export PROJECT_PATH_STORAGE=storage:build-$PROJECT_NAME-$CIRCLE_WORKFLOW_ID
             export IMAGE_NAME=neuromation/$PROJECT_NAME
             export IMAGE_REF=$IMAGE_NAME:build-$CIRCLE_WORKFLOW_ID
@@ -80,7 +80,7 @@ jobs:
 
       - docker/check
       - docker/push:
-          image: neuromation/ml-recipe-object-detection
+          image: $IMAGE_NAME
           tag: $CIRCLE_TAG,latest
 
 

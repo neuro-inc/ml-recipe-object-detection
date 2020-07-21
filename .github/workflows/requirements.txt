@@ -1,2 +1,2 @@
-neuromation==20.6.10
+neuromation>=20.4.15
 certifi>=2020.4.5.1

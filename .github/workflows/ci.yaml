@@ -54,7 +54,6 @@ jobs:
           make -f test.mk test_jupyter_baked TRAINING_MACHINE_TYPE=cpu-large | tee
           make -f test.mk test_jupyter_baked TRAINING_MACHINE_TYPE=gpu-small | tee
       - name: Cleanup Jobs
-        if: ${{ always() }}
         run: |
           source venv/bin/activate
 
